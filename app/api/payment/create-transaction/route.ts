@@ -1,23 +1,19 @@
 // app/api/payment/create-transaction/route.ts
 import { NextResponse } from 'next/server';
 import midtransClient from 'midtrans-client';
-
-function getJakartaDate(): string {
-  const now = new Date();
-  const jakartaTime = new Date(
-    now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })
-  );
-
-  const day = String(jakartaTime.getDate()).padStart(2, '0');
-  const month = String(jakartaTime.getMonth() + 1).padStart(2, '0');
-  const year = jakartaTime.getFullYear();
-
-  return `${day}/${month}/${year}`;
-}
+import { storePendingOrder } from '@/lib/orderStorage';
 
 export async function POST(request: Request) {
   try {
-    const { orderId, customerName, items, grossAmount, tableNumber } = await request.json();
+    const { orderId, customerName, items, grossAmount, tableNumber, branchNo } = await request.json();
+
+    // Validate required fields
+    if (!orderId || !customerName || !items || !grossAmount) {
+      return NextResponse.json(
+        { success: false, error: 'orderId, customerName, items and grossAmount are required' },
+        { status: 400 }
+      );
+    }
 
     // Create Snap API instance
     const snap = new midtransClient.Snap({
@@ -33,8 +29,6 @@ export async function POST(request: Request) {
       },
       customer_details: {
         first_name: customerName,
-        email: 'customer@store.com',
-        phone: '081234567890',
       },
       item_details: items.map((item: any) => ({
         id: item.productId,
@@ -49,20 +43,20 @@ export async function POST(request: Request) {
 
     const transaction = await snap.createTransaction(parameter);
 
-    // Store order data in session/database for later use
-    // For now, we'll pass it through the success page
+    // Store order data so webhook can retrieve it later
+    await storePendingOrder(orderId, {
+      customerName,
+      items,
+      tableNumber,
+      branchNo,
+    });
+
+    console.log('✅ Transaction created and order stored:', orderId);
 
     return NextResponse.json({
       success: true,
       token: transaction.token,
       redirectUrl: transaction.redirect_url,
-      orderData: {
-        orderId,
-        customerName,
-        items,
-        grossAmount,
-        tableNumber,
-      },
     });
   } catch (error: any) {
     console.error('Midtrans Error:', error);

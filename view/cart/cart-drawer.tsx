@@ -1,7 +1,7 @@
 // view/cart/CartDrawer.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ShoppingBag } from 'lucide-react';
 import {
   Sheet,
@@ -17,6 +17,7 @@ import { CartItem } from '@/view/cart/cart-item';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { OrderDialog } from '@/components/OrderDialogue';
+import { useTableStore } from '@/store/tableAndBranchStore';
 
 interface CartDrawerProps {
   open: boolean;
@@ -36,30 +37,41 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const router = useRouter();
 
+  // ✅ Get tableNumber and branchNo from Zustand (set from URL params)
+  const { tableNumber, branchNo } = useTableStore();
+
   const totalInIDR = Math.round(total * 15000);
 
-  const handlePlaceOrder = async (customerName: string, tableNumber: string) => {
+  const handlePlaceOrder = async (customerName: string) => {
     try {
       const orderId = `ORDER-${Date.now()}`;
 
-      // Store order data in localStorage for payment success callback
-      const orderData = {
+      // ✅ Capture branchNo and tableNumber at order time (not in onSuccess)
+      const capturedBranchNo    = branchNo    || '';
+      const capturedTableNumber = tableNumber || 'Takeaway';
+
+      console.log('📦 Creating transaction...');
+      console.log('   Table:', capturedTableNumber);
+      console.log('   Branch:', capturedBranchNo);
+
+      const orderItems = items.map((item) => ({
+        productId: item.productId,
+        productNo: item.productNo,
+        name:      item.name,
+        price:     Math.round(item.price * 15000),
+        quantity:  item.quantity,
+      }));
+
+      // ✅ Store all data including branchNo in localStorage
+      const pendingOrder = {
         orderId,
         customerName,
-        tableNumber: tableNumber || null,
-        items: items.map((item) => ({
-          productId: item.productId,
-          productNo: item.productNo,
-          name: item.name,
-          price: Math.round(item.price * 15000),
-          quantity: item.quantity,
-        })),
+        tableNumber: capturedTableNumber,
+        branchNo:    capturedBranchNo,
+        items:       orderItems,
         totalAmount: totalInIDR,
       };
-
-      localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-
-      console.log('📦 Creating transaction with table:', tableNumber);
+      localStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
 
       // Create Midtrans transaction
       const response = await fetch('/api/payment/create-transaction', {
@@ -68,13 +80,14 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         body: JSON.stringify({
           orderId,
           customerName,
-          items: orderData.items,
+          items:       orderItems,
           grossAmount: totalInIDR,
+          tableNumber: capturedTableNumber,
+          branchNo:    capturedBranchNo,
         }),
       });
 
       const data = await response.json();
-
       if (!data.success) {
         throw new Error(data.error || 'Failed to create transaction');
       }
@@ -89,20 +102,19 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             onSuccess: async function (result: any) {
               console.log('✅ Payment success:', result);
 
-              // Retrieve pending order data
-              const pendingOrder = JSON.parse(
+              // ✅ Read from localStorage (has branchNo)
+              const storedOrder = JSON.parse(
                 localStorage.getItem('pendingOrder') || '{}'
               );
 
-              // Create order in Accurate
-              const placeOrderResponse = await fetch(
-                '/api/payment/place-order',
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(pendingOrder),
-                }
-              );
+              console.log('📦 Stored order:', storedOrder);
+
+              // Create invoice in Accurate
+              const placeOrderResponse = await fetch('/api/payment/place-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(storedOrder),
+              });
 
               const placeOrderData = await placeOrderResponse.json();
 
@@ -110,13 +122,12 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 toast.success('Order placed successfully!');
                 clearCart();
                 localStorage.removeItem('pendingOrder');
-                
-                const successUrl = new URLSearchParams({
-                  order_id: orderId,
-                  accurate_order: placeOrderData.data.orderNumber,
-                  ...(tableNumber && { table: tableNumber }),
-                });
 
+                const successUrl = new URLSearchParams({
+                  order_id:      orderId,
+                  accurate_order: placeOrderData.data.orderNumber,
+                  ...(capturedTableNumber && { table: capturedTableNumber }),
+                });
                 router.push(`/payment/success?${successUrl.toString()}`);
               } else {
                 toast.error('Payment successful but failed to create order');
@@ -140,6 +151,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           });
         }
       }, 300);
+
     } catch (error: any) {
       console.error('❌ Order placement failed:', error);
       toast.error(error.message || 'Failed to process order');
@@ -195,13 +207,21 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   </div>
                 </div>
 
+                {/* ✅ Show table and branch info */}
+                {(tableNumber || branchNo) && (
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    {tableNumber && <p>🪑 Table: {tableNumber}</p>}
+                    {branchNo && <p>🏢 Branch: {branchNo}</p>}
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Button
                     className="w-full"
                     size="lg"
                     onClick={() => setIsOrderDialogOpen(true)}
                   >
-                    {'Place Order'}
+                    Place Order
                   </Button>
                   <Button
                     variant="outline"

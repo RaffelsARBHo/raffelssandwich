@@ -58,21 +58,20 @@ export async function POST(request: Request) {
     // Prepare the sales order data for Accurate API
     // Build form data for the request
     const formData: Record<string, string> = {
-      customerNo: body.customerNo,
-      transDate: body.transDate || getJakartaDate(),
+      customerNo:  body.customerNo,
+      transDate:   body.transDate || getJakartaDate(),
+      description: `Table No ${body.tableNumber} - ${body.orderId}`,
+      detailMemo:  `Customer: ${body.customerName} | Table: ${body.tableNumber} | Order Ref: ${body.orderId}`,
     };
 
-    // Add optional fields
-    if (body.description) {
-      formData.description = body.description;
+    // Table number as shipTo (separate field in Accurate)
+    if (body.tableNumber) {
+      formData.shipTo = `Table No ${body.tableNumber}`;
     }
 
-    if (body.detailMemo) {
-      formData.detailMemo = body.detailMemo;
-    }
-
+    // Branch number
     if (body.branchNo) {
-      formData.branchNo = body.branchNo;
+      formData.branchId = body.branchNo;
     }
 
     if (body.warehouseNo) {
@@ -100,7 +99,7 @@ export async function POST(request: Request) {
     console.log('📤 Sending to Accurate API:', formData);
 
     // Create the sales order
-    const response = await accurateFetch('/accurate/api/sales-order/save.do', {
+    const response = await accurateFetch('/accurate/api/sales-invoice/save.do', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -133,10 +132,12 @@ export async function POST(request: Request) {
       success: true,
       message: 'Sales order created successfully',
       data: {
-        id: response.r?.id,
-        number: response.r?.number,
+        id:           response.r?.id,
+        number:       response.r?.number,
         customerName: response.r?.customer?.name,
-        total: response.r?.total,
+        tableNumber:  response.r?.shipTo,
+        branchName:   response.r?.branch?.name,
+        total:        response.r?.total,
         fullResponse: response.r,
       },
     });

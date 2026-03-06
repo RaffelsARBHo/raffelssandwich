@@ -1,23 +1,28 @@
 // hooks/useTableNumber.ts
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTableStore } from '@/store/tableStore';
+import { useTableStore } from '@/store/tableAndBranchStore';
 
 export function useTableNumber() {
   const searchParams = useSearchParams();
-  const { tableNumber, setTableNumber } = useTableStore();
+  const { tableNumber, setTableNumber, branchNo, setBranchNo } = useTableStore();
 
   useEffect(() => {
-    // Get table number from URL
     const tableFromUrl = searchParams.get('table');
-    
     if (tableFromUrl && tableFromUrl !== tableNumber) {
       setTableNumber(tableFromUrl);
     }
-  }, [searchParams, tableNumber, setTableNumber]);
+
+    const branchFromUrl = searchParams.get('branch');
+    if (branchFromUrl && branchFromUrl !== branchNo) {
+      setBranchNo(branchFromUrl);
+    }
+  }, [searchParams, tableNumber, setTableNumber, branchNo, setBranchNo]);
 
   return {
     tableNumber,
     setTableNumber,
+    branchNo,
+    setBranchNo,
   };
 }

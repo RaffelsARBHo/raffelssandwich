@@ -2,51 +2,47 @@
 import fs from 'fs';
 import path from 'path';
 
-const STORAGE_PATH = path.join(process.cwd(), 'data', 'pending-orders.json');
+const filePath = path.join(process.cwd(), 'data', 'pending-orders.json');
 
-// Ensure data directory exists
-if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
-  fs.mkdirSync(path.join(process.cwd(), 'data'));
+function readOrders(): Record<string, any> {
+  try {
+    if (!fs.existsSync(filePath)) {
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
+      fs.writeFileSync(filePath, JSON.stringify({}));
+      return {};
+    }
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
 }
 
-export function savePendingOrder(orderId: string, orderData: any) {
-  let orders: any = {};
-  
-  try {
-    if (fs.existsSync(STORAGE_PATH)) {
-      orders = JSON.parse(fs.readFileSync(STORAGE_PATH, 'utf-8'));
-    }
-  } catch (error) {
-    console.error('Error reading orders file:', error);
-  }
+function writeOrders(orders: Record<string, any>) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
+}
 
-  orders[orderId] = orderData;
-  
-  fs.writeFileSync(STORAGE_PATH, JSON.stringify(orders, null, 2));
-  console.log('💾 Saved pending order:', orderId);
+export function storePendingOrder(orderId: string, data: {
+  customerName: string;
+  items: any[];
+  tableNumber: string;
+  branchNo: string;
+}) {
+  const orders = readOrders();
+  orders[orderId] = { ...data, createdAt: new Date().toISOString() };
+  writeOrders(orders);
+  console.log('💾 Pending order stored:', orderId);
 }
 
 export function getPendingOrder(orderId: string) {
-  try {
-    if (fs.existsSync(STORAGE_PATH)) {
-      const orders = JSON.parse(fs.readFileSync(STORAGE_PATH, 'utf-8'));
-      return orders[orderId] || null;
-    }
-  } catch (error) {
-    console.error('Error reading order:', error);
-  }
-  return null;
+  const orders = readOrders();
+  return orders[orderId] || null;
 }
 
 export function deletePendingOrder(orderId: string) {
-  try {
-    if (fs.existsSync(STORAGE_PATH)) {
-      const orders = JSON.parse(fs.readFileSync(STORAGE_PATH, 'utf-8'));
-      delete orders[orderId];
-      fs.writeFileSync(STORAGE_PATH, JSON.stringify(orders, null, 2));
-      console.log('🗑️  Deleted pending order:', orderId);
-    }
-  } catch (error) {
-    console.error('Error deleting order:', error);
-  }
+  const orders = readOrders();
+  delete orders[orderId];
+  writeOrders(orders);
+  console.log('🗑️ Pending order deleted:', orderId);
 }
