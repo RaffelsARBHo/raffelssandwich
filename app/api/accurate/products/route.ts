@@ -2,26 +2,46 @@
 import { accurateFetch } from '@/lib/accurate';
 import { NextResponse } from 'next/server';
 
-// Cache branch list to avoid fetching on every request
 const g = globalThis as any;
 if (!g.__branchCache) {
   g.__branchCache = { data: null, expiry: 0 };
 }
 
-async function getBranchName(branchId: number): Promise<string | null> {
+// Returns { name, isDefault } for a given branch ID, or null if not found
+async function getBranch(
+  branchId: number
+): Promise<{ name: string; isDefault: boolean } | null> {
   const now = Date.now();
   const cache = g.__branchCache;
 
-  // Refresh branch cache every 10 minutes
   if (!cache.data || now > cache.expiry) {
-    const res = await accurateFetch(`/accurate/api/branch/list.do?fields=id,name&sp.pageSize=100`);
+    const res = await accurateFetch(
+      `/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100`
+    );
     cache.data = res.d || [];
     cache.expiry = now + 10 * 60 * 1000;
-    console.log('🏢 Branch list cached:', cache.data.map((b: any) => `${b.id}=${b.name}`));
   }
 
   const branch = cache.data.find((b: any) => b.id === branchId);
-  return branch?.name || null;
+  if (!branch) return null;
+  return { name: branch.name, isDefault: branch.defaultBranch === true };
+}
+
+// Returns the default branch name (e.g. "Kantor Pusat")
+async function getDefaultBranchName(): Promise<string | null> {
+  const now = Date.now();
+  const cache = g.__branchCache;
+
+  if (!cache.data || now > cache.expiry) {
+    const res = await accurateFetch(
+      `/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100`
+    );
+    cache.data = res.d || [];
+    cache.expiry = now + 10 * 60 * 1000;
+  }
+
+  const defaultBranch = cache.data.find((b: any) => b.defaultBranch === true);
+  return defaultBranch?.name || null;
 }
 
 export async function GET(request: Request) {
@@ -32,43 +52,55 @@ export async function GET(request: Request) {
     const branchNo = searchParams.get('branchNo') || null;
 
     const rawSearch = searchParams.get('search') || '';
-    const search = typeof rawSearch === 'string' && !rawSearch.includes('[native code]')
-      ? rawSearch.trim()
-      : '';
+    const search =
+      typeof rawSearch === 'string' && !rawSearch.includes('[native code]')
+        ? rawSearch.trim()
+        : '';
 
     let url = `/accurate/api/item/list.do?fields=id,name,no,itemType,unitPrice,minimumSellingQuantity,unit1Name,balance,availableToSell,itemTypeName,balanceInUnit,availableToSellInAllUnit,onSales,controlQuantity,itemBranchName&sp.page=${page}&sp.pageSize=${pageSize}`;
 
     if (search) {
-      url += `&filter.keywords.op=CONTAIN&filter.keywords.val=${encodeURIComponent(search)}`;
+      url += `&filter.keywords.op=CONTAIN&filter.keywords.val=${encodeURIComponent(
+        search
+      )}`;
     }
 
     const listResponse = await accurateFetch(url);
     let products = listResponse.d || [];
 
-    console.log(`📦 Got ${products.length} products, branchNo: ${branchNo}`);
-
-    // Filter by itemBranchName
     if (branchNo && products.length > 0) {
       const branchId = parseInt(branchNo);
 
       if (!isNaN(branchId)) {
-        // Get the branch name for this branchId
-        const branchName = await getBranchName(branchId);
-        console.log(`🔍 Branch ${branchId} = "${branchName}"`);
+        const branch = await getBranch(branchId);
 
-        if (branchName) {
-          products = products.filter((product: any) => {
-            const productBranch = product.itemBranchName;
-
-            // No branch assigned = available on all branches
-            if (!productBranch) return true;
-
-            // Show if product belongs to this branch OR to head office
-            return productBranch === branchName;
-          });
-
-          console.log(`✅ After branch "${branchName}" filter: ${products.length} products`);
+        if (branch?.name === '[Semua Cabang]') {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Branch with ID ${branchId} does not exist`,
+            },
+            { status: 404 }
+          );
         }
+
+        // Get default branch name so we can treat it as "no restriction"
+        const defaultBranchName = await getDefaultBranchName();
+        products = products.filter((product: any) => {
+          const productBranch = product.itemBranchName;
+
+          // ✅ No branch assigned → show everywhere
+          if (!productBranch) return true;
+
+          // ✅ Assigned to default branch (e.g. "Kantor Pusat") → show everywhere
+          if (productBranch === defaultBranchName) return true;
+
+          // ✅ Explicitly assigned to this branch → show
+          if (productBranch === branch?.name) return true;
+
+          // ❌ Assigned to a different specific branch → hide
+          return false;
+        });
       }
     }
 
@@ -79,13 +111,16 @@ export async function GET(request: Request) {
       search,
       branchNo,
       count: products.length,
-      totalCount: branchNo ? products.length : (listResponse.sp?.rowCount || 0),
+      totalCount: branchNo ? products.length : listResponse.sp?.rowCount || 0,
       products,
     });
   } catch (err: any) {
     console.error('❌ Error:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal server error', details: err.toString() },
+      {
+        error: err.message || 'Internal server error',
+        details: err.toString(),
+      },
       { status: 500 }
     );
   }

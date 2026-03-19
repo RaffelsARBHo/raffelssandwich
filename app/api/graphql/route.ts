@@ -5,14 +5,13 @@ import resolvers from '@/server/graphql/resolvers';
 import typeDefs from '@/server/graphql/typedefs';
 import { getPayload } from '@/server/services/token';
 import prisma from '@/prisma/prisma';
-import { IGqlContext } from '@/types';
 
 const server = new ApolloServer({
   resolvers,
   typeDefs,
 });
 const handler = startServerAndCreateNextHandler<NextRequest>(server, {
-  context: async (req, res): Promise<IGqlContext> => {
+  context: async (req, res): Promise<any> => {
     let user;
     let isAdmin = false;
     const [, token] = req.headers.get('authorization')?.split(' ') || [];

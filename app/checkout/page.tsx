@@ -1,7 +1,5 @@
-import { CheckoutPage } from '@/view/checkout/checkout-page';
-
 const page = () => {
-  return <CheckoutPage />;
+  return null;
 };
 
 export default page;

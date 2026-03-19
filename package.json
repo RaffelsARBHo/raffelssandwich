@@ -86,8 +86,10 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/js-cookie": "^3.0.4",
     "@types/jsonwebtoken": "^9.0.3",
+    "@types/midtrans-client": "^1.4.0",
     "@types/nodemailer": "^6.4.14",
     "@types/react-modal": "^3.16.3",
     "@types/validator": "^13.11.2",
