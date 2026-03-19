@@ -19,7 +19,7 @@ function readOrders(): Record<string, any> {
     // If file doesn't exist, create it with empty object
     if (!fs.existsSync(filePath)) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true }); // ensure folder exists
-      fs.writeFileSync(filePath, JSON.stringify({})); // create empty JSON file
+      // fs.writeFileSync(filePath, JSON.stringify({})); // create empty JSON file
       return {};
     }
 
@@ -43,7 +43,7 @@ function writeOrders(orders: Record<string, any>) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
   // Save formatted JSON (pretty printed)
-  fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
+  // fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
 }
 
 /**
