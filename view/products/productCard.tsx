@@ -71,9 +71,9 @@ export function ProductCard({
           <span className="text-base sm:text-lg font-bold">
             Rp{product.unitPrice.toLocaleString('id-ID')}
           </span>
-          <span className="text-[11px] text-muted-foreground bg-gray-800 rounded-full px-2 py-1">
+          {/* <span className="text-[11px] text-muted-foreground bg-gray-800 rounded-full px-2 py-1"> */}
             {/* Available {product.availableToSell} */}
-          </span>
+          {/* </span> */}
         </div>
       </CardContent>
 
