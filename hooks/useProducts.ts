@@ -1,6 +1,7 @@
 // hooks/useProducts.ts
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useTableStore } from '@/store/tableAndBranchStore';
 
 interface PaginationParams {
   page: number;
@@ -8,7 +9,7 @@ interface PaginationParams {
   offset?: number;
 }
 
-async function fetchProducts(params: PaginationParams, search?: string) {
+async function fetchProducts(params: PaginationParams, search?: string, branchNo?: string | null) {
   const urlParams = new URLSearchParams({
     page: params.page.toString(),
     pageSize: params.pageSize.toString(),
@@ -18,12 +19,13 @@ async function fetchProducts(params: PaginationParams, search?: string) {
     urlParams.append('search', search);
   }
 
-  const res = await fetch(`/api/accurate/products?${urlParams.toString()}`);
-
-  if (!res.ok) {
-    throw new Error('Failed to fetch products');
+  // ✅ Pass branchNo to the API
+  if (branchNo) {
+    urlParams.append('branchNo', branchNo);
   }
 
+  const res = await fetch(`/api/accurate/products?${urlParams.toString()}`);
+  if (!res.ok) throw new Error('Failed to fetch products');
   return res.json();
 }
 
@@ -32,6 +34,7 @@ export function useProducts(
   paginationParams: PaginationParams
 ) {
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const { branchNo } = useTableStore(); // ✅ Read branchNo from store
 
   return useQuery({
     queryKey: [
@@ -39,11 +42,12 @@ export function useProducts(
       debouncedSearch,
       paginationParams.page,
       paginationParams.pageSize,
+      branchNo, // ✅ Re-fetch when branch changes
     ],
-    queryFn: () => fetchProducts(paginationParams, debouncedSearch),
+    queryFn: () => fetchProducts(paginationParams, debouncedSearch, branchNo),
     placeholderData: (previousData) => previousData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 

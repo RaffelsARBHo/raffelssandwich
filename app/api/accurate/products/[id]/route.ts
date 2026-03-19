@@ -91,11 +91,13 @@ export async function GET(
         itemData.detailItemImage?.map((img: any) => ({
           id: img.id || null,
           // Proxy the image URLs through our authenticated endpoint
-          fileName: img.fileName 
+          fileName: img.fileName
             ? `/api/accurate/image?path=${encodeURIComponent(img.fileName)}`
             : null,
-          thumbnailPath: img.thumbnailPath 
-            ? `/api/accurate/image?path=${encodeURIComponent(img.thumbnailPath)}`
+          thumbnailPath: img.thumbnailPath
+            ? `/api/accurate/image?path=${encodeURIComponent(
+                img.thumbnailPath
+              )}`
             : null,
           originalName: img.originalName || null,
           seq: img.seq || 0,
@@ -103,7 +105,9 @@ export async function GET(
 
       // Primary thumbnail for product card
       thumbnail: itemData.detailItemImage?.[0]?.thumbnailPath
-        ? `/api/accurate/image?path=${encodeURIComponent(itemData.detailItemImage[0].thumbnailPath)}`
+        ? `/api/accurate/image?path=${encodeURIComponent(
+            itemData.detailItemImage[0].thumbnailPath
+          )}`
         : null,
 
       // Selling Prices (by branch/category)

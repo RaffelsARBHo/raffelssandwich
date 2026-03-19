@@ -1,5 +1,6 @@
 // app/api/accurate/image/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getHost } from '@/lib/accurate';
 import crypto from 'crypto';
 
 function generateSignature(timestamp: string, signatureSecret: string): string {
@@ -13,15 +14,12 @@ function getCurrentTimestamp(): string {
   const jakartaTime = new Date(
     now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })
   );
-
   const day = String(jakartaTime.getDate()).padStart(2, '0');
   const month = String(jakartaTime.getMonth() + 1).padStart(2, '0');
   const year = jakartaTime.getFullYear();
-
   const hours = String(jakartaTime.getHours()).padStart(2, '0');
   const minutes = String(jakartaTime.getMinutes()).padStart(2, '0');
   const seconds = String(jakartaTime.getSeconds()).padStart(2, '0');
-
   return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
@@ -41,15 +39,15 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Server configuration error', { status: 500 });
     }
 
-    // Generate auth headers
+    // ✅ Use the same cached host as accurateFetch — not hardcoded ACCURATE_BASE_URL
+    const host = await getHost();
+    const imageUrl = imagePath.startsWith('http') ? imagePath : `${host}${imagePath}`;
+
+    console.log('🖼️ Fetching image:', imageUrl);
+
     const timestamp = getCurrentTimestamp();
     const signature = generateSignature(timestamp, signatureSecret);
 
-    // Construct full image URL
-    const baseUrl = process.env.ACCURATE_BASE_URL || 'https://zeus.accurate.id';
-    const imageUrl = imagePath.startsWith('http') ? imagePath : `${baseUrl}${imagePath}`;
-
-    // Fetch image with authentication
     const response = await fetch(imageUrl, {
       headers: {
         'Authorization': `Bearer ${apiToken}`,
@@ -59,15 +57,20 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error('❌ Image fetch failed:', response.status, response.statusText);
+      console.error(`❌ Image fetch failed: ${response.status} ${response.statusText} for ${imageUrl}`);
       return new NextResponse('Image not found', { status: 404 });
     }
 
-    // Get image data
-    const imageBuffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const contentType = response.headers.get('content-type') || '';
 
-    // Return image with caching headers
+    // ✅ Validate it's actually an image
+    if (!contentType.startsWith('image/')) {
+      console.error(`❌ Not an image. Content-Type: ${contentType} for ${imageUrl}`);
+      return new NextResponse('Not a valid image', { status: 404 });
+    }
+
+    const imageBuffer = await response.arrayBuffer();
+
     return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': contentType,

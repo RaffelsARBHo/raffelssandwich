@@ -50,11 +50,11 @@ export function ProductCard({
           </div>
         )}
 
-        {isOutOfStock && (
+        {/* {isOutOfStock && (
           <Badge variant="destructive" className="absolute left-2 top-2">
             Out of Stock
           </Badge>
-        )}
+        )} */}
 
         {product.unitPrice > 100 && (
           <Badge variant="secondary" className="absolute right-2 top-2">
@@ -72,7 +72,7 @@ export function ProductCard({
             Rp{product.unitPrice.toLocaleString('id-ID')}
           </span>
           <span className="text-[11px] text-muted-foreground bg-gray-800 rounded-full px-2 py-1">
-            Available {product.availableToSell}
+            {/* Available {product.availableToSell} */}
           </span>
         </div>
       </CardContent>
@@ -97,7 +97,7 @@ export function ProductCard({
                 1
               );
             }}
-            disabled={isOutOfStock}
+            // disabled={isOutOfStock}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
             Add to Cart
