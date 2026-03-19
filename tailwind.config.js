@@ -6,6 +6,7 @@ module.exports = {
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './auth/**/*.{js,ts,jsx,tsx,mdx}',
+    './view/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {

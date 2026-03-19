@@ -179,9 +179,7 @@ export const phoneOtpLogin = async (
       phoneOtp: otp,
     },
   });
-  if (user) {
-    console.log(user);
-  } else {
+  if (!user) {
     throw new Error(INCORRECT_OTP);
   }
 };

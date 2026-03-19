@@ -1,60 +1,58 @@
-'use client';
-
-import client from '@/client';
+// app/layout.tsx
+import type { Metadata } from 'next';
 import './globals.css';
-import { Inter } from 'next/font/google';
-import { Provider } from 'urql';
-import { SessionProvider } from 'next-auth/react';
-import { useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
 import { Toaster } from 'react-hot-toast';
-import SetContext from '@/components/Elements/SetContext';
-import { AppContext, IAppContext, IUser } from '@/utils/context';
+import { Toaster as ShadcnToaster } from '@/components/ui/toaster';
+import { Header } from '@/view/layout/header';
+import { Footer } from '@/view/layout/footer';
+import Script from 'next/script';
+import { Providers } from '@/components/Providers';
 
-const inter = Inter({ subsets: ['latin'] });
+const appUrl =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_APP_URL
+    ? process.env.NEXT_PUBLIC_APP_URL
+    : 'http://localhost:3000';
+
+export const metadata: Metadata = {
+  title: "Raffel's Sandwich",
+  description: "Order management for Raffel's Sandwich.",
+  metadataBase: new URL(appUrl),
+  openGraph: {
+    type: 'website',
+    title: "Raffel's Sandwich",
+    description: "Order management for Raffel's Sandwich.",
+    url: appUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Raffel's Sandwich",
+    description: "Order management for Raffel's Sandwich.",
+  },
+  themeColor: '#111827',
+};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    const token = Cookies.get('token');
-    if (!token) {
-      fetch('/api/token').then((data) => {
-        data.json().then((d) => {
-          Cookies.set('token', d.token);
-          window.location.reload();
-        });
-      });
-    }
-  }, []);
-
-  const [context, setContext] = useState<any>({ fetching: true });
-
-  const setFetching = (fetching: boolean) => {
-    (context as any).fetching = fetching;
-    setContext({ ...context });
-  };
-
-  const setUser = (user: IUser) => {
-    setContext({ ...context, user });
-  };
-
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <Toaster />
-        <SessionProvider>
-          <AppContext.Provider value={{ context, setUser, setFetching }}>
-            {
-              <Provider value={client}>
-                <SetContext />
-                {children}
-              </Provider>
-            }
-          </AppContext.Provider>
-        </SessionProvider>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <Toaster position="top-center" />
+        <ShadcnToaster />
+
+        <Providers>
+          <Header />
+          {children}
+          <Footer />
+        </Providers>
+
+        <Script
+          src="https://app.sandbox.midtrans.com/snap/snap.js"
+          data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
