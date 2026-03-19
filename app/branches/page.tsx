@@ -32,7 +32,6 @@ export default function BranchesPage() {
         <thead>
           <tr>
             <th>ID</th>
-            <th>Number</th>
             <th>Name</th>
           </tr>
         </thead>
@@ -40,16 +39,11 @@ export default function BranchesPage() {
           {branches.map((branch, i) => (
             <tr key={i}>
               <td>{branch.id ?? '—'}</td>
-              <td>{branch.number ?? '—'}</td>
               <td>{branch.name}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <h3 style={{ marginTop: 20 }}>Raw JSON:</h3>
-      <pre style={{ background: '#f4f4f4', padding: 12 }}>
-        {JSON.stringify(branches, null, 2)}
-      </pre>
     </div>
   );
 }
