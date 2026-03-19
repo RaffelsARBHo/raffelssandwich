@@ -45,9 +45,11 @@ export function OrderList({ orders, isLoading }: OrderListProps) {
     }
   };
 
+  console.log(orders)
+
   return (
     <div className="space-y-4">
-      {orders.map((order) => (
+      {orders.map((order:any) => (
         <Card key={order.id} className="hover:shadow-md transition-shadow">
           <CardHeader className="pb-2">
             <div className="flex items-start justify-between">
@@ -69,7 +71,7 @@ export function OrderList({ orders, isLoading }: OrderListProps) {
                   Customer: {order.customer?.name}
                 </p>
                 <p className="text-lg font-semibold mt-1">
-                  ${order.total?.toFixed(2)}
+                  Rp{order.total?.toLocaleString('id-ID')}
                 </p>
               </div>
               <Button variant="outline" size="sm" asChild>

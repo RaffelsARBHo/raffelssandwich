@@ -38,7 +38,6 @@ export function OrderDialog({
   useEffect(() => {
     if (open && storedTableNumber) {
       setTableNumber(storedTableNumber);
-      console.log('📋 Auto-filled table number from storage:', storedTableNumber);
     }
   }, [open, storedTableNumber]);
 
@@ -54,7 +53,6 @@ export function OrderDialog({
       // Save table number to store for future use
       if (tableNumber.trim()) {
         saveTableNumber(tableNumber.trim());
-        console.log('💾 Saved table number:', tableNumber.trim());
       }
 
       await onConfirm(customerName, tableNumber.trim());

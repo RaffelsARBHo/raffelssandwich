@@ -49,8 +49,6 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.ACCURATE_BASE_URL || 'https://zeus.accurate.id';
     const imageUrl = imagePath.startsWith('http') ? imagePath : `${baseUrl}${imagePath}`;
 
-    console.log('🖼️  Proxying image:', imageUrl);
-
     // Fetch image with authentication
     const response = await fetch(imageUrl, {
       headers: {

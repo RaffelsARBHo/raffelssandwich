@@ -31,8 +31,6 @@ function ProductsContent() {
   const [productsWithImages, setProductsWithImages] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
 
-  console.log(productsWithImages)
-
   const { page, pageSize, setPage, setPageSize, totalPages, paginationParams } =
     usePagination({
       initialPageSize: 12,
@@ -83,29 +81,28 @@ function ProductsContent() {
     }
   }, [products, imagesData]);
 
-  console.log(productsWithImages, "productsWithImages")
   const isLoading = productsLoading || imagesLoading;
 
   return (
     <>
       {/* Header */}
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">All Products</h1>
+        <h2 className="text-3xl font-extrabold tracking-tight">Our Menu</h2>
         <p className="text-muted-foreground">
           {search ? (
             <>
-              Found {totalItems} product{totalItems !== 1 ? 's' : ''} matching
+              Found {totalItems} item{totalItems !== 1 ? 's' : ''} matching
               &quot;{search}&quot;
             </>
           ) : (
-            <>Browse our collection of {totalItems} high-quality products</>
+            <>Fresh sandwiches and tasty bites — {totalItems} items available</>
           )}
         </p>
       </div>
 
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="w-full sm:w-96">
+        <div className="w-full sm:w-96" id="menu-search">
           <SearchWrapper />
         </div>
         {/* Add more filters here if needed */}

@@ -14,7 +14,6 @@ export default function OAuthCallback() {
   useEffect(() => {
     const handleSession = async () => {
       const { data, error } = await supabase.auth.getSession();
-      console.log(data, 'userdata');
       if (error || !data.session) {
         toast.error('OAuth login failed');
         router.push('/auth/signin');

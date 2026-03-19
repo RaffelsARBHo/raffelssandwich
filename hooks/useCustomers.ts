@@ -34,7 +34,6 @@ export function useCreateCustomer() {
   return useMutation({
     mutationFn: createCustomer,
     onSuccess: (data) => {
-      console.log('✅ Customer created:', data.customer);
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     },
   });

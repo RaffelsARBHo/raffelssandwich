@@ -6,11 +6,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    console.log(
-      '📦 Creating sales order with data:',
-      JSON.stringify(body, null, 2)
-    );
-
     // Validate required fields
     if (!body.customerNo) {
       return NextResponse.json(
@@ -96,8 +91,6 @@ export async function POST(request: Request) {
       }
     });
 
-    console.log('📤 Sending to Accurate API:', formData);
-
     // Create the sales order
     const response = await accurateFetch('/accurate/api/sales-invoice/save.do', {
       method: 'POST',
@@ -106,11 +99,6 @@ export async function POST(request: Request) {
       },
       body: new URLSearchParams(formData).toString(),
     });
-
-    console.log(
-      '📥 Response from Accurate:',
-      JSON.stringify(response, null, 2)
-    );
 
     if (!response.s) {
       console.error('❌ Sales order creation failed:', response.d);
@@ -123,10 +111,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
-    console.log('✅ Sales order created successfully!');
-    console.log('   Order No:', response.r?.number);
-    console.log('   Order ID:', response.r?.id);
 
     return NextResponse.json({
       success: true,

@@ -40,38 +40,25 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   // ✅ Get tableNumber and branchNo from Zustand (set from URL params)
   const { tableNumber, branchNo } = useTableStore();
 
-  const totalInIDR = Math.round(total * 15000);
-
   const handlePlaceOrder = async (customerName: string) => {
     try {
       const orderId = `ORDER-${Date.now()}`;
 
-      // ✅ Capture branchNo and tableNumber at order time (not in onSuccess)
-      const capturedBranchNo    = branchNo    || '';
+      const capturedBranchNo = branchNo || '';
       const capturedTableNumber = tableNumber || 'Takeaway';
-
-      console.log('📦 Creating transaction...');
-      console.log('   Table:', capturedTableNumber);
-      console.log('   Branch:', capturedBranchNo);
 
       const orderItems = items.map((item) => ({
         productId: item.productId,
         productNo: item.productNo,
         name:      item.name,
-        price:     Math.round(item.price * 15000),
+        price:     item.price,
         quantity:  item.quantity,
       }));
 
-      // ✅ Store all data including branchNo in localStorage
-      const pendingOrder = {
-        orderId,
-        customerName,
-        tableNumber: capturedTableNumber,
-        branchNo:    capturedBranchNo,
-        items:       orderItems,
-        totalAmount: totalInIDR,
-      };
-      localStorage.setItem('pendingOrder', JSON.stringify(pendingOrder));
+      const grossAmount = orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
 
       // Create Midtrans transaction
       const response = await fetch('/api/payment/create-transaction', {
@@ -81,7 +68,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
           orderId,
           customerName,
           items:       orderItems,
-          grossAmount: totalInIDR,
+          grossAmount,
           tableNumber: capturedTableNumber,
           branchNo:    capturedBranchNo,
         }),
@@ -100,20 +87,11 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         if (window.snap) {
           window.snap.pay(data.token, {
             onSuccess: async function (result: any) {
-              console.log('✅ Payment success:', result);
-
-              // ✅ Read from localStorage (has branchNo)
-              const storedOrder = JSON.parse(
-                localStorage.getItem('pendingOrder') || '{}'
-              );
-
-              console.log('📦 Stored order:', storedOrder);
-
-              // Create invoice in Accurate
+              // Create invoice + payment in Accurate
               const placeOrderResponse = await fetch('/api/payment/place-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(storedOrder),
+                body: JSON.stringify({ orderId }),
               });
 
               const placeOrderData = await placeOrderResponse.json();
@@ -121,7 +99,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               if (placeOrderData.success) {
                 toast.success('Order placed successfully!');
                 clearCart();
-                localStorage.removeItem('pendingOrder');
 
                 const successUrl = new URLSearchParams({
                   order_id:      orderId,
@@ -135,17 +112,14 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               }
             },
             onPending: function (result: any) {
-              console.log('⏳ Payment pending:', result);
               toast.loading('Payment is being processed...');
               router.push(`/payment/pending?order_id=${orderId}`);
             },
             onError: function (result: any) {
               console.error('❌ Payment error:', result);
               toast.error('Payment failed');
-              localStorage.removeItem('pendingOrder');
             },
             onClose: function () {
-              console.log('🚪 Payment cancelled');
               toast('Payment cancelled', { icon: '❌' });
             },
           });
@@ -164,7 +138,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         <SheetContent className="flex w-full flex-col sm:max-w-lg py-10">
           <SheetHeader className="px-1">
             <SheetTitle className="flex items-center justify-between">
-              <span>Shopping Cart</span>
+              <span>Your Order</span>
               <span className="text-sm font-normal text-muted-foreground">
                 {items.length} {items.length === 1 ? 'item' : 'items'}
               </span>
@@ -175,12 +149,12 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
             <div className="flex flex-1 flex-col items-center justify-center space-y-4">
               <ShoppingBag className="h-12 w-12 text-muted-foreground" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Your cart is empty</h3>
+                <h3 className="text-lg font-semibold">Your order is empty</h3>
                 <p className="text-sm text-muted-foreground">
                   Looks like you haven&apos;t added anything to your cart yet.
                 </p>
               </div>
-              <Button onClick={() => onOpenChange(false)}>
+              <Button className="shadow-sm" onClick={() => onOpenChange(false)}>
                 Continue Shopping
               </Button>
             </div>
@@ -198,12 +172,12 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>Rp{totalInIDR.toLocaleString('id-ID')}</span>
+                    <span>Rp{total.toLocaleString('id-ID')}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>Rp{totalInIDR.toLocaleString('id-ID')}</span>
+                    <span>Rp{total.toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 
@@ -241,7 +215,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
         open={isOrderDialogOpen}
         onOpenChange={setIsOrderDialogOpen}
         onConfirm={handlePlaceOrder}
-        totalAmount={totalInIDR}
+        totalAmount={total}
       />
     </>
   );

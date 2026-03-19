@@ -1,13 +1,6 @@
 // view/layout/Footer.tsx
 import Link from 'next/link';
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-} from 'lucide-react';
+import { FaTiktok, FaInstagram, FaEnvelope } from 'react-icons/fa';
 import { siteConfig } from '@/config/site';
 import Maxwidth from '@/components/Maxwidth';
 
@@ -15,7 +8,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-background py-12 md:py-16">
       <Maxwidth className="">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">{siteConfig.name}</h3>
@@ -24,22 +17,20 @@ export function Footer() {
             </p>
             <div className="flex space-x-4">
               <Link
-                href="#"
+                href={siteConfig.links.instagram}
                 className="text-muted-foreground hover:text-primary"
+                target="_blank"
+                rel="noreferrer"
               >
-                <Facebook className="h-5 w-5" />
+                <FaInstagram className="h-5 w-5" />
               </Link>
               <Link
-                href="#"
-                className="text-muted-foreground hover:text-primary"
+                href={siteConfig.links.tiktok}
+                className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
+                target="_blank"
+                rel="noreferrer"
               >
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link
-                href="#"
-                className="text-muted-foreground hover:text-primary"
-              >
-                <Instagram className="h-5 w-5" />
+                <FaTiktok className="h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -76,7 +67,7 @@ export function Footer() {
           </div>
 
           {/* Customer Service */}
-          <div>
+          {/* <div>
             <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
             <ul className="space-y-2">
               <li>
@@ -112,30 +103,16 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-3">
-              <li className="flex items-start space-x-3">
-                <MapPin className="h-5 w-5 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground">
-                  123 Business Ave, Suite 100
-                  <br />
-                  City, State 12345
-                </span>
-              </li>
               <li className="flex items-center space-x-3">
-                <Phone className="h-5 w-5 text-muted-foreground shrink-0" />
+                <FaEnvelope  className="h-5 w-5 text-muted-foreground shrink-0" />
                 <span className="text-sm text-muted-foreground">
-                  +1 (555) 123-4567
-                </span>
-              </li>
-              <li className="flex items-center space-x-3">
-                <Mail className="h-5 w-5 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground">
-                  support@{siteConfig.name.toLowerCase()}.com
+                  {siteConfig.links.email}
                 </span>
               </li>
             </ul>

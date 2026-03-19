@@ -36,10 +36,6 @@ export async function verifyApiToken() {
   const timestamp = getCurrentTimestamp();
   const signature = generateSignature(timestamp, signatureSecret);
 
-  console.log('🔍 Verifying API Token...');
-  console.log('📅 Timestamp:', timestamp);
-  console.log('🔑 Signature:', signature.substring(0, 20) + '...');
-
   const res = await fetch('https://account.accurate.id/api/api-token.do', {
     method: 'POST',
     headers: {
@@ -49,10 +45,7 @@ export async function verifyApiToken() {
     },
   });
 
-  console.log('📡 Response Status:', res.status);
-
   const text = await res.text();
-  console.log('📥 Response Body:', text.substring(0, 500));
 
   if (!res.ok) {
     console.error('❌ HTTP Error:', res.status, res.statusText);
@@ -67,7 +60,6 @@ export async function verifyApiToken() {
     throw new Error(`Invalid JSON response: ${text.substring(0, 200)}`);
   }
 
-  console.log('📊 Parsed Response:', JSON.stringify(data, null, 2));
 
   if (!data.s) {
     console.error('❌ Verification failed. Full response:', data);
@@ -81,16 +73,6 @@ export async function verifyApiToken() {
 
     throw new Error(`Token verification failed: ${JSON.stringify(data)}`);
   }
-
-  console.log('✅ Token verified!');
-  console.log(
-    '📊 Database:',
-    data.d.database?.alias || data.d['data usaha']?.alias || 'Unknown'
-  );
-  console.log(
-    '🔗 Host:',
-    data.d.database?.host || data.d['data usaha']?.host || 'Unknown'
-  );
 
   return data.d;
 }
@@ -123,7 +105,6 @@ export async function accurateFetch(
   const timestamp = getCurrentTimestamp();
   const signature = generateSignature(timestamp, signatureSecret);
 
-  console.log('📡 Fetching:', url);
 
   const res = await fetch(url, {
     ...options,

@@ -1,11 +1,13 @@
 // config/site.ts
 export const siteConfig = {
-  name: 'Store',
-  description: 'Your one-stop shop for all your needs',
-  url: 'https://yourdomain.com',
-  ogImage: 'https://yourdomain.com/og.jpg',
+  name: "Raffel's Sandwich",
+  description:
+    'Fresh, satisfying sandwiches made with love',
+  url: 'https://raffelssandwich.com',
+  ogImage: '/assets/logo.png',
   links: {
-    twitter: 'https://twitter.com/yourstore',
-    github: 'https://github.com/yourstore',
+    instagram: 'https://instagram.com/raffels_sandwich',
+    tiktok: 'https://www.tiktok.com/@raffels_sandwich',
+    email: 'support@raffelssandwich.com',
   },
 };

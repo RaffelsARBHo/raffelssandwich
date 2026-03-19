@@ -1,5 +1,6 @@
 //app/api/accurate/products/route.ts
 import { accurateFetch } from '@/lib/accurate';
+import { useTableStore } from '@/store/tableAndBranchStore';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -9,12 +10,10 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
     const search = searchParams.get('search') || '';
-
-    console.log(`📦 Fetching products - Page ${page}, Size ${pageSize}, Search: "${search}"...`);
+    const branch = useTableStore.getState().branchNo;
 
     // Build URL with pagination and stock fields
     let url = `/accurate/api/item/list.do?fields=id,name,no,itemType,unitPrice,minimumSellingQuantity,unit1Name,balance,availableToSell,itemTypeName,balanceInUnit,availableToSellInAllUnit,onSales,controlQuantity&sp.page=${page}&sp.pageSize=${pageSize}`;
-    
     // Add search filter if provided
     if (search) {
       // Use CONTAIN operator for partial matching
@@ -23,9 +22,6 @@ export async function GET(request: Request) {
 
     // Fetch products
     const response = await accurateFetch(url);
-
-    console.log('✅ Products fetched successfully');
-    console.log('📊 Sample product:', response.d?.[0]);
 
     return NextResponse.json({
       success: true,

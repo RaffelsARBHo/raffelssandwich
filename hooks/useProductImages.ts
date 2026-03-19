@@ -7,8 +7,6 @@ async function fetchProductImages(productIds: (string | number)[]) {
     return [];
   }
 
-  console.log('🖼️ Fetching images for products:', productIds);
-
   const res = await fetch('/api/accurate/products/images', {
     method: 'POST',
     headers: {
@@ -22,8 +20,6 @@ async function fetchProductImages(productIds: (string | number)[]) {
   }
 
   const data = await res.json();
-
-  console.log(data, 'data333333333');
 
   // Transform URLs to use our proxy API (API 2)
   const transformedData = (data.data || []).map((item: any) => ({
@@ -40,7 +36,6 @@ async function fetchProductImages(productIds: (string | number)[]) {
     //   ? transformToProxyUrl(item.images[0].thumbnailPath)
     //   : null,
   }));
-  console.log(transformedData, 'transformedData');
   return transformedData;
 }
 

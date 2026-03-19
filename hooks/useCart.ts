@@ -28,7 +28,6 @@ export function useCart() {
       image: product.imageUrlThumb,
       maxQuantity: product.availableToSell,
     };
-    console.log(cartItem, "cartItemcheckprice")
     addItem(cartItem);
     
     // ✅ Open cart drawer when item is added

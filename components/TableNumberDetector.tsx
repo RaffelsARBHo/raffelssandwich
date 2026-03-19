@@ -12,13 +12,11 @@ export function TableNumberDetector() {
   useEffect(() => {
     const tableFromUrl = searchParams.get('table');
     if (tableFromUrl) {
-      console.log('📍 Table number detected from URL:', tableFromUrl);
       setTableNumber(tableFromUrl);
     }
 
     const branchFromUrl = searchParams.get('branch');
     if (branchFromUrl) {
-      console.log('🏢 Branch detected from URL:', branchFromUrl);
       setBranchNo(branchFromUrl);
     }
   }, [searchParams, setTableNumber, setBranchNo]);

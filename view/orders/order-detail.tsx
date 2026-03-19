@@ -105,23 +105,21 @@ export function OrderDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Shipping Address */}
+        {/* Table Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
-              Shipping Address
+              Table
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {order.shipAddress?.street ? (
-              <div className="space-y-1 text-sm">
-                <p>{order.shipAddress.street}</p>
-                <p>{order.shipAddress.city}, {order.shipAddress.province}</p>
-                <p>{order.shipAddress.country} {order.shipAddress.zipCode}</p>
-              </div>
+            {order.tableLabel ? (
+              <p className="text-sm">
+                {order.tableLabel}
+              </p>
             ) : (
-              <p className="text-sm text-muted-foreground">No address provided</p>
+              <p className="text-sm text-muted-foreground">No table information</p>
             )}
           </CardContent>
         </Card>
@@ -147,10 +145,10 @@ export function OrderDetailPage() {
                     </div>
                     <div className="text-right min-w-[120px]">
                       <p className="font-medium">
-                        ${item.totalPrice?.toFixed(2)}
+                        Rp{item.totalPrice?.toLocaleString('id-ID')}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {item.quantity} x ${item.unitPrice?.toFixed(2)}
+                        {item.quantity} x Rp{item.unitPrice?.toLocaleString('id-ID')}
                       </p>
                     </div>
                   </div>
@@ -173,24 +171,24 @@ export function OrderDetailPage() {
             <div className="space-y-2 max-w-md">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span>${order.subTotal?.toFixed(2)}</span>
+                <span>Rp{order.subTotal?.toLocaleString('id-ID')}</span>
               </div>
               {order.discount > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Discount</span>
-                  <span className="text-red-600">-${order.discount?.toFixed(2)}</span>
+                  <span className="text-red-600">-Rp{order.discount?.toLocaleString('id-ID')}</span>
                 </div>
               )}
               {order.tax1Amount > 0 && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax</span>
-                  <span>${order.tax1Amount?.toFixed(2)}</span>
+                  <span>Rp{order.tax1Amount?.toLocaleString('id-ID')}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
-                <span>${order.totalAmount?.toFixed(2)}</span>
+                <span>Rp{order.totalAmount?.toLocaleString('id-ID')}</span>
               </div>
             </div>
           </CardContent>

@@ -56,7 +56,11 @@ export default function ProductDetail() {
   }
 
   const images = product?.images || [];
-  const mainImage = images[selectedImage]?.fileName || images[0]?.fileName || product.thumbnail;
+  const mainImage =
+    images[selectedImage]?.fileName ||
+    images[0]?.fileName ||
+    product.thumbnail;
+
 
   const handleAddToCart = () => {
     addToCart(
@@ -77,7 +81,7 @@ export default function ProductDetail() {
       {/* Breadcrumb */}
       <nav className="flex text-sm text-muted-foreground">
         <a href="/" className="hover:text-primary">
-          Products
+          Menu
         </a>
         <span className="mx-2">/</span>
         <span className="text-foreground">{product.name}</span>
@@ -86,7 +90,7 @@ export default function ProductDetail() {
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Product Images */}
         <div className="space-y-4">
-          <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted">
+          <div className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
             {mainImage && !imageError ? (
               <img
                 src={mainImage}
@@ -142,9 +146,11 @@ export default function ProductDetail() {
 
           {/* Price & Stock */}
           <div className="flex items-baseline gap-4">
-            <span className="text-4xl font-bold">
-              ${product.unitPrice.toFixed(2)}
-            </span>
+            <div className="space-y-1">
+              <div className="text-4xl font-extrabold tracking-tight">
+                Rp{product.unitPrice.toLocaleString('id-ID')}
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -210,7 +216,7 @@ export default function ProductDetail() {
 
             <Button
               size="lg"
-              className="w-full"
+              className="w-full shadow-sm"
               onClick={handleAddToCart}
               disabled={
                 !product.availableToSell || product.availableToSell === 0

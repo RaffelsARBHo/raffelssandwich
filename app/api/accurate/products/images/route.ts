@@ -11,12 +11,6 @@ async function fetchImagesInBatches(
   for (let i = 0; i < productIds.length; i += batchSize) {
     const batch = productIds.slice(i, i + batchSize);
 
-    console.log(
-      `📦 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(
-        productIds.length / batchSize
-      )}`
-    );
-
     const batchResults = await Promise.all(
       batch.map(async (id) => {
         try {
@@ -86,15 +80,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`🖼️  Fetching images for ${productIds.length} products...`);
-
     const imagesData = await fetchImagesInBatches(productIds);
-
-    console.log(
-      `✅ Successfully fetched images for ${
-        imagesData.filter((d) => !d.error).length
-      }/${productIds.length} products`
-    );
 
     return NextResponse.json({
       success: true,

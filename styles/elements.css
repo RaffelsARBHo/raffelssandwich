@@ -5,6 +5,9 @@
   background-color: black;
   width: 100%;
   padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 10000;
 }
 
 .logo-panel {
@@ -12,6 +15,11 @@
   align-items: center;
   background-color: black;
   gap: 30px;
+}
+
+.logo-img {
+  height: 40px;
+  width: auto;
 }
 
 .nav-option {

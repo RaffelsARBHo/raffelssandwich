@@ -9,8 +9,6 @@ export async function GET(
   const params = await Promise.resolve(context.params);
   const id = params.id;
 
-  console.log(`\n📦 Fetching item detail for id: ${id}`);
-
   if (!id || id === 'undefined') {
     return NextResponse.json(
       {
@@ -25,8 +23,6 @@ export async function GET(
     const detailResponse = await accurateFetch(
       `/accurate/api/item/detail.do?id=${id}`
     );
-
-    console.log(`✅ Successfully fetched item detail for id: ${id}`);
 
     if (!detailResponse.s) {
       console.warn(`⚠️  Item detail API returned error:`, detailResponse.d);

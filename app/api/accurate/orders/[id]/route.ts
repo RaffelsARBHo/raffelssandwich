@@ -9,8 +9,6 @@ export async function GET(
   const params = await Promise.resolve(context.params);
   const id = params.id;
 
-  console.log(`\n📦 Fetching sales order detail for id: ${id}`);
-
   if (!id || id === 'undefined') {
     return NextResponse.json(
       {
@@ -22,12 +20,10 @@ export async function GET(
   }
 
   try {
-    // Fetch sales order detail from Accurate API
+    // Fetch sales invoice detail from Accurate API (POS creates invoices, not orders)
     const detailResponse = await accurateFetch(
-      `/accurate/api/sales-order/detail.do?id=${id}`
+      `/accurate/api/sales-invoice/detail.do?id=${id}`
     );
-
-    console.log(`✅ Successfully fetched order detail for id: ${id}`);
 
     if (!detailResponse.s) {
       console.warn(`⚠️  Order detail API returned error:`, detailResponse.d);
@@ -64,15 +60,8 @@ export async function GET(
           mobilePhone: orderData.customer?.contactInfo?.mobilePhone || null,
         },
 
-        // Shipping Address
-        toAddress: orderData.toAddress || null,
-        shipAddress: {
-          street: orderData.customer?.shipAddress?.street || null,
-          city: orderData.customer?.shipAddress?.city || null,
-          province: orderData.customer?.shipAddress?.province || null,
-          country: orderData.customer?.shipAddress?.country || null,
-          zipCode: orderData.customer?.shipAddress?.zipCode || null,
-        },
+        // Table info (we store "Table No X" in shipTo when creating invoices)
+        tableLabel: orderData.shipTo || null,
 
         // Items
         items:

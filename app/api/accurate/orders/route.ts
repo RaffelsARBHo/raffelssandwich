@@ -12,11 +12,10 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    console.log('📦 Fetching sales orders list...');
-
     // Build query parameters
     const queryParams = new URLSearchParams({
-      fields: 'id,number,transDate,customer,total,status',
+      // For sales invoices, total can appear as total or totalAmount depending on context.
+      fields: 'id,number,transDate,customer,total,totalAmount,status',
       'sp.page': String(page),
       'sp.pageSize': String(pageSize),
     });
@@ -37,11 +36,10 @@ export async function GET(request: Request) {
       queryParams.append('filter.transDate', endDate);
     }
 
+    // Use sales-invoice list so amounts match what POS actually creates
     const listResponse = await accurateFetch(
-      `/accurate/api/sales-order/list.do?${queryParams.toString()}`
+      `/accurate/api/sales-invoice/list.do?${queryParams.toString()}`
     );
-
-    console.log(`📊 Found ${listResponse.d?.length || 0} sales orders`);
 
     if (!listResponse.s) {
       return NextResponse.json(
@@ -53,9 +51,17 @@ export async function GET(request: Request) {
       );
     }
 
+    const rows = (listResponse.d || []) as any[];
+
+    const normalized = rows.map((row) => ({
+      ...row,
+      // Normalize amount field for frontend (Order.total)
+      total: row.total ?? row.totalAmount ?? 0,
+    }));
+
     return NextResponse.json({
       success: true,
-      data: listResponse.d || [],
+      data: normalized,
       pagination: listResponse.sp || {
         page,
         pageSize: pageSize,

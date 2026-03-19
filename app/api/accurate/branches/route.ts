@@ -8,16 +8,12 @@ export async function GET() {
       method: 'GET',
     });
 
-    console.log('📥 Branches response:', JSON.stringify(response, null, 2));
-
     if (!response.s) {
       return NextResponse.json(
         { success: false, error: response.d },
         { status: 400 }
       );
     }
-
-    console.log('📥 Branches data:', JSON.stringify(response.d, null, 2));
 
     return NextResponse.json({
       success: true,

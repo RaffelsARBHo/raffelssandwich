@@ -45,7 +45,7 @@ export function CartItem({ item }: any) {
           <div>
             <h4 className="text-sm font-medium line-clamp-2">{item.name}</h4>
             <p className="mt-1 text-xs text-muted-foreground">
-              ${item.price?.toFixed(2)} each
+              Rp{item.price?.toLocaleString('id-ID')}
             </p>
           </div>
           <Button
@@ -90,7 +90,7 @@ export function CartItem({ item }: any) {
 
         {/* Item Total */}
         <div className="mt-2 text-right text-sm font-semibold">
-          ${(item.price * item.quantity).toFixed(2)}
+          Rp{(item.price * item.quantity).toLocaleString('id-ID')}
         </div>
       </div>
     </div>

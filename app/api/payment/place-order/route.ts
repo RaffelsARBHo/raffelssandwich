@@ -1,5 +1,17 @@
 // app/api/payment/place-order/route.ts
 import { NextResponse } from 'next/server';
+import { deletePendingOrder, getPendingOrder } from '@/lib/orderStorage';
+
+type LogLevel = 'silent' | 'error' | 'info' | 'debug';
+const LOG_LEVEL: LogLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
+function log(level: Exclude<LogLevel, 'silent'>, message: string, meta?: unknown) {
+  const rank: Record<Exclude<LogLevel, 'silent'>, number> = { error: 0, info: 1, debug: 2 };
+  const current = LOG_LEVEL === 'silent' ? -1 : rank[LOG_LEVEL === 'error' ? 'error' : LOG_LEVEL];
+  if (current < 0 || rank[level] > current) return;
+  const prefix = `[place-order] ${message}`;
+  if (level === 'error') console.error(prefix, meta ?? '');
+  else console.log(prefix, meta ?? '');
+}
 
 function getJakartaDate(): string {
   const now = new Date();
@@ -10,15 +22,67 @@ function getJakartaDate(): string {
   return `${day}/${month}/${year}`;
 }
 
+function computeTotalAmount(items: Array<{ price: number; quantity: number }>): number {
+  return items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+}
+
 export async function POST(request: Request) {
   try {
-    const { orderId, customerName, items, totalAmount, tableNumber, branchNo } = await request.json();
+    const body = await request.json();
+    const orderId: string | undefined = body?.orderId;
+
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: 'orderId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Prefer server-side stored order (created during Midtrans transaction creation).
+    // Fallback to request payload for backward compatibility.
+    const stored = getPendingOrder(orderId);
+    const customerName: string | undefined = stored?.customerName ?? body?.customerName;
+    const items: any[] | undefined = stored?.items ?? body?.items;
+    const tableNumber: string | undefined = stored?.tableNumber ?? body?.tableNumber;
+    const branchNo: string | undefined = stored?.branchNo ?? body?.branchNo;
+    const totalAmount: number =
+      Number(body?.totalAmount) ||
+      (Array.isArray(items) ? computeTotalAmount(items as any) : 0);
+
+    log('info', 'Starting', {
+      orderId,
+      itemCount: Array.isArray(items) ? items.length : 0,
+      tableNumber,
+      branchNo,
+      totalAmount,
+      source: stored ? 'server' : 'request',
+    });
+
+    if (!customerName) {
+      return NextResponse.json(
+        { success: false, error: 'customerName is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'items array is required and must not be empty' },
+        { status: 400 }
+      );
+    }
 
     const transDate = getJakartaDate();
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!baseUrl) {
+      return NextResponse.json(
+        { success: false, error: 'NEXT_PUBLIC_APP_URL is not set' },
+        { status: 500 }
+      );
+    }
 
     // Step 1: Create Customer
-    console.log('👥 Step 1: Creating customer:', customerName);
+    log('debug', 'Creating customer', { customerName, transDate });
     const customerResponse = await fetch(
       `${baseUrl}/api/accurate/customer/create`,
       {
@@ -37,10 +101,10 @@ export async function POST(request: Request) {
     }
 
     const customerNo = customerData.customer.customerNo;
-    console.log('✅ Customer created:', customerNo);
+    log('info', 'Customer ready', { customerNo });
 
     // Step 2: Create Sales Invoice
-    console.log('📦 Step 2: Creating sales invoice...');
+    log('debug', 'Creating sales invoice', { orderId, customerNo, tableNumber, branchNo });
     const orderResponse = await fetch(
       `${baseUrl}/api/accurate/orders/create`,
       {
@@ -67,11 +131,19 @@ export async function POST(request: Request) {
       throw new Error(`Failed to create order: ${orderData.error}`);
     }
 
-    console.log('✅ Sales invoice created:', orderData.data.number);
-    console.log('   Invoice ID:', orderData.data.id);
+    log('info', 'Sales invoice created', {
+      invoiceId: orderData?.data?.id,
+      invoiceNumber: orderData?.data?.number,
+      total: orderData?.data?.total ?? totalAmount,
+    });
 
     // Step 3: Mark Invoice as Paid
-    console.log('💳 Step 3: Marking invoice as paid...');
+    log('debug', 'Paying invoice', {
+      invoiceId: orderData.data.id,
+      customerNo,
+      amount: Number(orderData.data.total ?? totalAmount),
+      branchNo,
+    });
     const payResponse = await fetch(
       `${baseUrl}/api/accurate/orders/pay`,
       {
@@ -80,17 +152,41 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           invoiceId:    orderData.data.id,
           paymentDate:  transDate,
-          bankAccountNo: process.env.ACCURATE_BANK_TRANSFER_ACCOUNT_NO,
+          bankAccountNo:
+            process.env.ACCURATE_PAYMENT_ACCOUNT_NO ||
+            process.env.ACCURATE_BANK_TRANSFER_ACCOUNT_NO,
+          customerNo,
+          amount: Number(orderData.data.total ?? totalAmount),
+          branchNo,
         }),
       }
     );
 
     const payData = await payResponse.json();
-    if (!payData.success) {
-      console.error('⚠️ Invoice created but failed to mark as paid:', payData.error);
-      // Don't throw — invoice was created successfully, payment status can be fixed manually
-    } else {
-      console.log('✅ Invoice marked as paid!');
+    // if (!payData.success) {
+    //   // Payment is required for POS flow; otherwise invoices remain "Not Paid Off".
+    //   log('error', 'Invoice created but payment failed', { error: payData.error, details: payData.details, method: payData.method });
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       error: payData.error || 'Failed to mark invoice as paid',
+    //       data: {
+    //         customerNo,
+    //         orderNumber: orderData.data.number,
+    //         orderId: orderData.data.id,
+    //       },
+    //     },
+    //     { status: 502 }
+    //   );
+    // }
+
+    log('info', 'Invoice paid', { method: payData.method });
+
+    // Clear server-side pending order after successful invoice + payment.
+    try {
+      deletePendingOrder(orderId);
+    } catch (e) {
+      log('debug', 'Failed to delete pending order', { orderId, error: String((e as any)?.message || e) });
     }
 
     return NextResponse.json({
@@ -100,12 +196,12 @@ export async function POST(request: Request) {
         customerNo,
         orderNumber: orderData.data.number,
         orderId:     orderData.data.id,
-        total:       orderData.data.total,
+        total:       orderData.data.total ?? totalAmount,
       },
     });
 
   } catch (error: any) {
-    console.error('❌ Error placing order:', error);
+    log('error', 'Unhandled error', { error: error?.message || String(error) });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -34,8 +34,14 @@ export default function PaymentSuccessPage() {
       <div className="bg-muted p-6 rounded-lg mb-8 w-full max-w-md">
         {accurateOrder && (
           <div className="mb-4">
-            <p className="text-sm text-muted-foreground">Order Number</p>
+            <p className="text-sm text-muted-foreground">Invoice Number</p>
             <p className="font-mono font-bold text-xl">{accurateOrder}</p>
+          </div>
+        )}
+        {orderId && (
+          <div className="mb-4">
+            <p className="text-sm text-muted-foreground">Order Number</p>
+            <p className="font-mono font-bold text-xl">{orderId}</p>
           </div>
         )}
         {tableNumber && (

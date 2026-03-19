@@ -46,8 +46,6 @@ export async function GET(
     // Construct the full image URL (using zeus.accurate.id based on your logs)
     const imageUrl = `https://zeus.accurate.id/accurate/files/${imagePath}`;
     
-    console.log(`🖼️  Fetching image: ${imageUrl}`);
-
     // Generate authentication headers
     const timestamp = getCurrentTimestamp();
     const signature = generateSignature(timestamp, signatureSecret);
@@ -72,8 +70,6 @@ export async function GET(
     // Get the image data
     const imageBuffer = await response.arrayBuffer();
     const contentType = response.headers.get('content-type') || 'image/jpeg';
-
-    console.log(`✅ Image fetched successfully (${contentType})`);
 
     // Return the image with proper headers
     return new NextResponse(imageBuffer, {

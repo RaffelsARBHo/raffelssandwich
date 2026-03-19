@@ -22,10 +22,19 @@ export async function POST(request: Request) {
       clientKey: process.env.MIDTRANS_CLIENT_KEY!,
     });
 
+    const computedGrossAmount = Array.isArray(items)
+      ? items.reduce((sum: number, item: any) => {
+          const price = Number(item?.price) || 0;
+          const qty = Number(item?.quantity) || 0;
+          return sum + price * qty;
+        }, 0)
+      : 0;
+
     const parameter = {
       transaction_details: {
         order_id: orderId,
-        gross_amount: grossAmount,
+        // Midtrans requires gross_amount === sum(item_details)
+        gross_amount: computedGrossAmount || grossAmount,
       },
       customer_details: {
         first_name: customerName,
@@ -50,8 +59,6 @@ export async function POST(request: Request) {
       tableNumber,
       branchNo,
     });
-
-    console.log('✅ Transaction created and order stored:', orderId);
 
     return NextResponse.json({
       success: true,
