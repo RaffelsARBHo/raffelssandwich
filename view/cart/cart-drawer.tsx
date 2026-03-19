@@ -37,7 +37,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const router = useRouter();
 
-  // ✅ Get tableNumber and branchNo from Zustand (set from URL params)
   const { tableNumber, branchNo } = useTableStore();
 
   const handlePlaceOrder = async (customerName: string) => {
@@ -82,16 +81,22 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       setIsOrderDialogOpen(false);
       onOpenChange(false);
 
-      // Open Midtrans Snap
       setTimeout(() => {
         if (window.snap) {
           window.snap.pay(data.token, {
             onSuccess: async function (result: any) {
-              // Create invoice + payment in Accurate
+              // ✅ Pass all required fields directly — server has no access to Zustand store
               const placeOrderResponse = await fetch('/api/payment/place-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId }),
+                body: JSON.stringify({
+                  orderId,
+                  customerName,
+                  tableNumber: capturedTableNumber,
+                  branchNo:    capturedBranchNo,
+                  items:       orderItems,
+                  totalAmount: grossAmount,
+                }),
               });
 
               const placeOrderData = await placeOrderResponse.json();
@@ -101,7 +106,7 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                 clearCart();
 
                 const successUrl = new URLSearchParams({
-                  order_id:      orderId,
+                  order_id:       orderId,
                   accurate_order: placeOrderData.data.orderNumber,
                   ...(capturedTableNumber && { table: capturedTableNumber }),
                 });
@@ -181,7 +186,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
                   </div>
                 </div>
 
-                {/* ✅ Show table and branch info */}
                 {(tableNumber || branchNo) && (
                   <div className="text-xs text-muted-foreground space-y-1">
                     {tableNumber && <p>🪑 Table: {tableNumber}</p>}

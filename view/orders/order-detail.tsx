@@ -106,7 +106,7 @@ export function OrderDetailPage() {
         </Card>
 
         {/* Table Information */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />
@@ -122,7 +122,7 @@ export function OrderDetailPage() {
               <p className="text-sm text-muted-foreground">No table information</p>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Order Items */}
         <Card className="md:col-span-2">
