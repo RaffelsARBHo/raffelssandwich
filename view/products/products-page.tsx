@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useProducts } from '@/hooks/useProducts';
 import { ProductGrid } from '@/view/products/productGrid';
 import { ProductSearch } from '@/view/products/product-search';
+import { CategoryFilter } from '@/view/products/CategoryFilter';
 import { Pagination } from '@/components/ui/pagination';
 import Maxwidth from '@/components/Maxwidth';
 import { usePagination } from '@/hooks/usePagination';
@@ -25,9 +26,26 @@ function SearchWrapper() {
   );
 }
 
+function CategoryFilterWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex gap-2 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-20 shrink-0 rounded-full" />
+          ))}
+        </div>
+      }
+    >
+      <CategoryFilter />
+    </Suspense>
+  );
+}
+
 function ProductsContent() {
   const searchParams = useSearchParams();
   const search = searchParams.get('search') || '';
+  const categoryId = searchParams.get('categoryId') || '';          // ← new
   const [productsWithImages, setProductsWithImages] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -39,7 +57,8 @@ function ProductsContent() {
 
   const { data, isLoading: productsLoading } = useProducts(
     search,
-    paginationParams
+    paginationParams,
+    categoryId,                                                     // ← new
   );
 
   useEffect(() => {
@@ -48,7 +67,6 @@ function ProductsContent() {
   }, [data?.totalCount]);
 
   const products = data?.products || [];
- 
 
   const productIds = useMemo(
     () => products.map((p: any) => p.id).filter(Boolean),
@@ -101,11 +119,14 @@ function ProductsContent() {
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3">
+        {/* Search bar */}
         <div className="w-full sm:w-96" id="menu-search">
           <SearchWrapper />
         </div>
-        {/* Add more filters here if needed */}
+
+        {/* Category filter pills */}
+        <CategoryFilterWrapper />
       </div>
 
       {/* Products Grid */}
@@ -144,6 +165,11 @@ export function ProductsPage() {
               <Skeleton className="h-6 w-96" />
             </div>
             <Skeleton className="h-10 w-full sm:w-96" />
+            <div className="flex gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-20 rounded-full" />
+              ))}
+            </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 12 }).map((_, i) => (
                 <Skeleton key={i} className="h-80 w-full" />

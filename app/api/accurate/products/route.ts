@@ -43,6 +43,9 @@ export async function GET(request: Request) {
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
     const branchNo = searchParams.get('branchNo') || null;
 
+    // Category filter — accepts a single category ID
+    const categoryId = searchParams.get('categoryId') || null;
+
     const rawSearch = searchParams.get('search') || '';
     const search = typeof rawSearch === 'string' && !rawSearch.includes('[native code]')
       ? rawSearch.trim()
@@ -84,9 +87,18 @@ export async function GET(request: Request) {
       }, { status: 404 });
     }
 
-    // Fetch product list
+    // Build product list URL
     let url = `/accurate/api/item/list.do?fields=id,name,no,itemType,unitPrice,minimumSellingQuantity,unit1Name,balance,availableToSell,itemTypeName,balanceInUnit,availableToSellInAllUnit,onSales,controlQuantity,itemBranchName&sp.page=${page}&sp.pageSize=${pageSize}`;
 
+    // ✅ Category filter — passed server-side to Accurate
+    if (categoryId) {
+      const parsedCategoryId = parseInt(categoryId);
+      if (!isNaN(parsedCategoryId)) {
+        url += `&filter.itemCategoryId.op=EQUAL&filter.itemCategoryId.val=${parsedCategoryId}`;
+      }
+    }
+
+    // ✅ Keyword search filter
     if (search) {
       url += `&filter.keywords.op=CONTAIN&filter.keywords.val=${encodeURIComponent(search)}`;
     }
@@ -122,6 +134,7 @@ export async function GET(request: Request) {
       pageSize,
       search,
       branchNo,
+      categoryId: categoryId || null,
       count: products.length,
       totalCount: products.length,
       products,

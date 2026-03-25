@@ -9,20 +9,20 @@ interface PaginationParams {
   offset?: number;
 }
 
-async function fetchProducts(params: PaginationParams, search?: string, branchNo?: string | null) {
+async function fetchProducts(
+  params: PaginationParams,
+  search?: string,
+  branchNo?: string | null,
+  categoryId?: string | null,
+) {
   const urlParams = new URLSearchParams({
     page: params.page.toString(),
     pageSize: params.pageSize.toString(),
   });
 
-  if (search) {
-    urlParams.append('search', search);
-  }
-
-  // ✅ Pass branchNo to the API
-  if (branchNo) {
-    urlParams.append('branchNo', branchNo);
-  }
+  if (search) urlParams.append('search', search);
+  if (branchNo) urlParams.append('branchNo', branchNo);
+  if (categoryId) urlParams.append('categoryId', categoryId);
 
   const res = await fetch(`/api/accurate/products?${urlParams.toString()}`);
   if (!res.ok) throw new Error('Failed to fetch products');
@@ -31,10 +31,11 @@ async function fetchProducts(params: PaginationParams, search?: string, branchNo
 
 export function useProducts(
   searchTerm: string = '',
-  paginationParams: PaginationParams
+  paginationParams: PaginationParams,
+  categoryId?: string | null,
 ) {
   const debouncedSearch = useDebounce(searchTerm, 500);
-  const { branchNo } = useTableStore(); // ✅ Read branchNo from store
+  const { branchNo } = useTableStore();
 
   return useQuery({
     queryKey: [
@@ -42,9 +43,10 @@ export function useProducts(
       debouncedSearch,
       paginationParams.page,
       paginationParams.pageSize,
-      branchNo, // ✅ Re-fetch when branch changes
+      branchNo,
+      categoryId ?? null, // ✅ Re-fetch when category changes
     ],
-    queryFn: () => fetchProducts(paginationParams, debouncedSearch, branchNo),
+    queryFn: () => fetchProducts(paginationParams, debouncedSearch, branchNo, categoryId),
     placeholderData: (previousData) => previousData,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
