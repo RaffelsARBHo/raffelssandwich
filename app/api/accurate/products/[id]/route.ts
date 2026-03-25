@@ -25,7 +25,6 @@ export async function GET(
     );
 
     if (!detailResponse.s) {
-      console.warn(`⚠️  Item detail API returned error:`, detailResponse.d);
       return NextResponse.json(
         {
           success: false,
@@ -173,7 +172,6 @@ export async function GET(
       data: essentialDetails,
     });
   } catch (err: any) {
-    console.error(`❌ Error fetching item detail for id ${id}:`, err.message);
     return NextResponse.json(
       {
         success: false,

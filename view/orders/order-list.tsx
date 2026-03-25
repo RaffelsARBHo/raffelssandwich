@@ -45,8 +45,6 @@ export function OrderList({ orders, isLoading }: OrderListProps) {
     }
   };
 
-  console.log(orders)
-
   return (
     <div className="space-y-4">
       {orders.map((order:any) => (

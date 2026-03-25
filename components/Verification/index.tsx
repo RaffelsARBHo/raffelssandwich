@@ -25,7 +25,7 @@ function Verification({}) {
     if (token) {
       verifyEmail({ token });
     }
-  }, [token]);
+  }, [token, verifyEmail]);
 
   if (fetching) return 'Verifying...';
 

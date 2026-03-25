@@ -218,9 +218,9 @@ export default function ProductDetail() {
               size="lg"
               className="w-full shadow-sm"
               onClick={handleAddToCart}
-              disabled={
-                !product.availableToSell || product.availableToSell === 0
-              }
+              // disabled={
+              //   !product.availableToSell || product.availableToSell === 0
+              // }
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Add to Cart

@@ -48,7 +48,6 @@ export async function POST(request: Request) {
 
     // Check if request was successful
     if (!response.s) {
-      console.error('❌ Customer creation failed:', response.d);
       return NextResponse.json(
         {
           success: false,
@@ -88,7 +87,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (err: any) {
-    console.error('❌ Error creating customer:', err);
     return NextResponse.json(
       {
         success: false,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 function SocialLogin({}) {
   const [csrf, setCsrf] = useState();
@@ -17,12 +18,14 @@ function SocialLogin({}) {
         <input type="hidden" name="csrfToken" value={csrf} />
         <input type="hidden" name="callbackUrl" value="/" />
         <button type="submit" className="button">
-          <img
+          <Image
+            unoptimized
             loading="lazy"
-            height="24"
-            width="24"
             id="provider-logo"
             src="https://authjs.dev/img/providers/google.svg"
+            alt="Google"
+            width={24}
+            height={24}
           />
           <span>Sign in with Google</span>
         </button>
@@ -31,12 +34,14 @@ function SocialLogin({}) {
         <input type="hidden" name="csrfToken" value={csrf} />
         <input type="hidden" name="callbackUrl" value="/" />
         <button type="submit" className="button">
-          <img
+          <Image
+            unoptimized
             loading="lazy"
-            height="24"
-            width="24"
             id="provider-logo"
-            src="https://authjs.dev/img/providers/google.svg"
+            src="https://authjs.dev/img/providers/facebook.svg"
+            alt="Facebook"
+            width={24}
+            height={24}
           />
           <span>Sign in with Facebook</span>
         </button>

@@ -66,7 +66,6 @@ export async function POST(request: Request) {
       redirectUrl: transaction.redirect_url,
     });
   } catch (error: any) {
-    console.error('Midtrans Error:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

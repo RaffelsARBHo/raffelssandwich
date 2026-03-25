@@ -60,7 +60,6 @@ export async function GET(
     });
 
     if (!response.ok) {
-      console.error(`❌ Failed to fetch image: ${response.status} ${response.statusText}`);
       return NextResponse.json(
         { error: 'Image not found', status: response.status },
         { status: response.status }
@@ -79,7 +78,6 @@ export async function GET(
       },
     });
   } catch (err: any) {
-    console.error('❌ Error fetching image:', err);
     return NextResponse.json(
       { error: 'Failed to fetch image', details: err.message },
       { status: 500 }

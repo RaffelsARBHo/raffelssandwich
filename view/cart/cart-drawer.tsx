@@ -121,7 +121,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
               router.push(`/payment/pending?order_id=${orderId}`);
             },
             onError: function (result: any) {
-              console.error('❌ Payment error:', result);
               toast.error('Payment failed');
             },
             onClose: function () {
@@ -132,7 +131,6 @@ export function CartDrawer({ open, onOpenChange }: CartDrawerProps) {
       }, 300);
 
     } catch (error: any) {
-      console.error('❌ Order placement failed:', error);
       toast.error(error.message || 'Failed to process order');
     }
   };

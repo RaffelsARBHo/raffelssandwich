@@ -70,7 +70,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (err: any) {
-    console.error('❌ Error fetching sales orders:', err);
     return NextResponse.json(
       {
         success: false,

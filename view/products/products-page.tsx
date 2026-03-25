@@ -105,6 +105,8 @@ function ProductsContent() {
     <>
       {/* Header */}
       <div className="space-y-4">
+        {/* Category filter pills */}
+        <CategoryFilterWrapper />
         <h2 className="text-3xl font-extrabold tracking-tight">Our Menu</h2>
         <p className="text-muted-foreground">
           {search ? (
@@ -124,9 +126,6 @@ function ProductsContent() {
         <div className="w-full sm:w-96" id="menu-search">
           <SearchWrapper />
         </div>
-
-        {/* Category filter pills */}
-        <CategoryFilterWrapper />
       </div>
 
       {/* Products Grid */}

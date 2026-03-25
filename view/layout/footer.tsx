@@ -8,11 +8,11 @@ export function Footer() {
   return (
     <footer className="border-t bg-background py-12 md:py-16">
       <Maxwidth className="">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-16 md:grid-cols-2 lg:grid-cols-3">
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">{siteConfig.name}</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-muted-foreground mb-4 flex text-justify">
               {siteConfig.description}
             </p>
             <div className="flex space-x-4">
@@ -65,45 +65,6 @@ export function Footer() {
               </li>
             </ul>
           </div>
-
-          {/* Customer Service */}
-          {/* <div>
-            <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  Shipping Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  Returns & Exchanges
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="text-sm text-muted-foreground hover:text-primary"
-                >
-                  FAQ
-                </Link>
-              </li>
-            </ul>
-          </div> */}
 
           {/* Contact Info */}
           <div>

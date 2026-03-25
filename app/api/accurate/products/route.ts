@@ -2,40 +2,6 @@
 import { accurateFetch } from '@/lib/accurate';
 import { NextResponse } from 'next/server';
 
-const g = globalThis as any;
-if (!g.__branchCache) {
-  g.__branchCache = { data: null, expiry: 0 };
-}
-
-async function getBranch(branchId: number): Promise<{ name: string; isDefault: boolean } | null> {
-  const now = Date.now();
-  const cache = g.__branchCache;
-
-  if (!cache.data || now > cache.expiry) {
-    const res = await accurateFetch(`/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100`);
-    cache.data = res.d || [];
-    cache.expiry = now + 10 * 60 * 1000;
-  }
-
-  const branch = cache.data.find((b: any) => b.id === branchId);
-  if (!branch) return null;
-  return { name: branch.name, isDefault: branch.defaultBranch === true };
-}
-
-async function getDefaultBranchName(): Promise<string | null> {
-  const now = Date.now();
-  const cache = g.__branchCache;
-
-  if (!cache.data || now > cache.expiry) {
-    const res = await accurateFetch(`/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100`);
-    cache.data = res.d || [];
-    cache.expiry = now + 10 * 60 * 1000;
-  }
-
-  const defaultBranch = cache.data.find((b: any) => b.defaultBranch === true);
-  return defaultBranch?.name || null;
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -47,9 +13,7 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get('categoryId') || null;
 
     const rawSearch = searchParams.get('search') || '';
-    const search = typeof rawSearch === 'string' && !rawSearch.includes('[native code]')
-      ? rawSearch.trim()
-      : '';
+    const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
 
     // ✅ If no branchNo provided — return no products
     if (!branchNo) {
@@ -75,8 +39,13 @@ export async function GET(request: Request) {
       }, { status: 400 });
     }
 
-    // ✅ If branch not found in Accurate — return no products
-    const branch = await getBranch(branchId);
+    const branchesRes = await accurateFetch(
+      '/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100'
+    );
+    const branches: Array<{ id: number; name: string; defaultBranch: boolean }> = branchesRes.d || [];
+    const branch = branches.find((b) => Number(b.id) === branchId);
+
+    // If branch not found in Accurate — return no products
     if (!branch) {
       return NextResponse.json({
         success: false,
@@ -107,8 +76,8 @@ export async function GET(request: Request) {
     let products = listResponse.d || [];
 
     // Filter by branch
-    const defaultBranchName = await getDefaultBranchName();
-    console.log(`🔍 Filtering for branch "${branch.name}", default: "${defaultBranchName}"`);
+    const defaultBranchName =
+      branches.find((b) => b.defaultBranch === true)?.name ?? null;
 
     products = products.filter((product: any) => {
       const productBranch = product.itemBranchName;
@@ -126,8 +95,6 @@ export async function GET(request: Request) {
       return false;
     });
 
-    console.log(`✅ After branch "${branch.name}" filter: ${products.length} products`);
-
     return NextResponse.json({
       success: true,
       page,
@@ -140,7 +107,6 @@ export async function GET(request: Request) {
       products,
     });
   } catch (err: any) {
-    console.error('❌ Error:', err);
     return NextResponse.json(
       { error: err.message || 'Internal server error', details: err.toString() },
       { status: 500 }

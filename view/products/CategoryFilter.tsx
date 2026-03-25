@@ -70,7 +70,6 @@ export function CategoryFilter() {
     );
   }
 
-  console.log("categs", categories);
   if (!categories.length) return null;
 
   return (

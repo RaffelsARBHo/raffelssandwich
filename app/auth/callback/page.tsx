@@ -2,14 +2,14 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { createClient } from '@/lib/supabase/client';
 
 export default function OAuthCallback() {
-  const supabase = createClient();
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const handleSession = async () => {
@@ -25,7 +25,7 @@ export default function OAuthCallback() {
     };
 
     handleSession();
-  }, []);
+  }, [router, supabase]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">

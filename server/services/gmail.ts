@@ -3,7 +3,6 @@ import { ISendMailArgs } from './resend';
 
 export const send = async ({ to, subject, text }: ISendMailArgs) => {
   try {
-    console.log('Called');
     const from = process.env.GMAIL_EMAIL;
     const transporter = nodemailer.createTransport({
       service: 'gmail',

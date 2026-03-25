@@ -24,7 +24,7 @@ function SetContext() {
 
   useEffect(() => {
     setFetching?.(fetchingCurrentUser);
-  }, [fetchingCurrentUser]);
+  }, [fetchingCurrentUser, setFetching]);
 
   useEffect(() => {
     if (!fetchingCurrentUser && userData?.user) {
@@ -38,7 +38,7 @@ function SetContext() {
         router.push('/disclaimer');
       }
     }
-  }, [fetchingCurrentUser, userData]);
+  }, [fetchingCurrentUser, userData, pathname, router, setUser]);
 
   return null;
 }

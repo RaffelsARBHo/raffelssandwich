@@ -44,10 +44,6 @@ async function fetchImagesInBatches(
               : null,
           };
         } catch (err: any) {
-          console.error(
-            `❌ Failed to fetch image for product ${id}:`,
-            err.message
-          );
           return {
             productId: id,
             images: [],
@@ -87,7 +83,6 @@ export async function POST(request: Request) {
       data: imagesData,
     });
   } catch (err: any) {
-    console.error('❌ Error:', err);
     return NextResponse.json(
       { error: err.message || 'Internal server error' },
       { status: 500 }

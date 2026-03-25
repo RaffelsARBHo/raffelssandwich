@@ -2,11 +2,6 @@
 import { accurateFetch } from '@/lib/accurate';
 import { NextResponse } from 'next/server';
 
-const g = globalThis as any;
-if (!g.__categoryCache) {
-  g.__categoryCache = { data: null, expiry: 0 };
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -17,16 +12,6 @@ export async function GET(request: Request) {
 
     // Use cache for full unfiltered category list
     const useCache = !search && leafOnly === false && page === 1;
-    const now = Date.now();
-    const cache = g.__categoryCache;
-
-    if (useCache && cache.data && now < cache.expiry) {
-      return NextResponse.json({
-        success: true,
-        count: cache.data.length,
-        categories: cache.data,
-      });
-    }
 
     let url = `/accurate/api/item-category/list.do?fields=id,name,no&sp.page=${page}&sp.pageSize=${pageSize}`;
 
@@ -38,14 +23,11 @@ export async function GET(request: Request) {
       url += `&filter.leafOnly=true`;
     }
 
-    const res = await accurateFetch(url);
+    const res = await accurateFetch(url, {
+      accurateCache: useCache,
+      cacheTtlMs: 10 * 60 * 1000, // 10 minutes
+    });
     const categories: { id: number; name: string; no: string }[] = res.d || [];
-
-    // Cache only the plain full list
-    if (useCache) {
-      cache.data = categories;
-      cache.expiry = now + 10 * 60 * 1000; // 10 minutes
-    }
 
     return NextResponse.json({
       success: true,
@@ -55,7 +37,6 @@ export async function GET(request: Request) {
       categories,
     });
   } catch (err: any) {
-    console.error('❌ Error fetching item categories:', err);
     return NextResponse.json(
       { error: err.message || 'Internal server error', details: err.toString() },
       { status: 500 }

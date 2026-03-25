@@ -33,7 +33,6 @@ export const send = async ({
     });
     return {};
   } catch (err) {
-    console.log(err);
     return { error: true };
   }
 };

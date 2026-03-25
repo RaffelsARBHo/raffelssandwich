@@ -43,8 +43,6 @@ export async function GET(request: NextRequest) {
     const host = await getHost();
     const imageUrl = imagePath.startsWith('http') ? imagePath : `${host}${imagePath}`;
 
-    console.log('🖼️ Fetching image:', imageUrl);
-
     const timestamp = getCurrentTimestamp();
     const signature = generateSignature(timestamp, signatureSecret);
 
@@ -57,7 +55,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error(`❌ Image fetch failed: ${response.status} ${response.statusText} for ${imageUrl}`);
       return new NextResponse('Image not found', { status: 404 });
     }
 
@@ -65,7 +62,6 @@ export async function GET(request: NextRequest) {
 
     // ✅ Validate it's actually an image
     if (!contentType.startsWith('image/')) {
-      console.error(`❌ Not an image. Content-Type: ${contentType} for ${imageUrl}`);
       return new NextResponse('Not a valid image', { status: 404 });
     }
 
@@ -78,7 +74,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('❌ Image proxy error:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

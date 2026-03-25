@@ -60,7 +60,6 @@ export function OrderDialog({
       // Clear customer name but keep table number for next order
       setCustomerName('');
     } catch (error) {
-      console.error('Order failed:', error);
     } finally {
       setIsLoading(false);
     }

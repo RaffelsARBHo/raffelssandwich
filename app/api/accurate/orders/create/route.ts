@@ -101,7 +101,6 @@ export async function POST(request: Request) {
     });
 
     if (!response.s) {
-      console.error('❌ Sales order creation failed:', response.d);
       return NextResponse.json(
         {
           success: false,
@@ -126,7 +125,6 @@ export async function POST(request: Request) {
       },
     });
   } catch (err: any) {
-    console.error('❌ Error creating sales order:', err);
     return NextResponse.json(
       {
         success: false,

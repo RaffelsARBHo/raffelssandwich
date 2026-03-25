@@ -9,8 +9,15 @@ function log(level: Exclude<LogLevel, 'silent'>, message: string, meta?: unknown
   const current = LOG_LEVEL === 'silent' ? -1 : rank[LOG_LEVEL === 'error' ? 'error' : LOG_LEVEL];
   if (current < 0 || rank[level] > current) return;
   const prefix = `[accurate-pay] ${message}`;
-  if (level === 'error') console.error(prefix, meta ?? '');
-  else console.log(prefix, meta ?? '');
+  const metaStr = meta === undefined ? '' : (() => {
+    try {
+      return typeof meta === 'string' ? meta : JSON.stringify(meta);
+    } catch {
+      return String(meta);
+    }
+  })();
+  if (level === 'error') process.stderr.write(`${prefix}${metaStr ? ` ${metaStr}` : ''}\n`);
+  else process.stdout.write(`${prefix}${metaStr ? ` ${metaStr}` : ''}\n`);
 }
 
 function getJakartaDate(): string {
