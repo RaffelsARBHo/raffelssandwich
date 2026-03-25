@@ -37,16 +37,31 @@ export function useProducts(
   const debouncedSearch = useDebounce(searchTerm, 500);
   const { branchNo } = useTableStore();
 
+  // "All branches" can come from the URL/store as a label (not an id).
+  // Normalize it to null so our API doesn't treat it as an invalid numeric branch id.
+  const normalizedBranchNo =
+    branchNo &&
+    typeof branchNo === 'string' &&
+    branchNo.toLowerCase().includes('all') &&
+    branchNo.toLowerCase().includes('branch')
+      ? null
+      : branchNo &&
+          typeof branchNo === 'string' &&
+          branchNo.toLowerCase().includes('semua cabang')
+        ? null
+      : branchNo;
+
   return useQuery({
     queryKey: [
       'products',
       debouncedSearch,
       paginationParams.page,
       paginationParams.pageSize,
-      branchNo,
+      normalizedBranchNo,
       categoryId ?? null, // ✅ Re-fetch when category changes
     ],
-    queryFn: () => fetchProducts(paginationParams, debouncedSearch, branchNo, categoryId),
+    queryFn: () =>
+      fetchProducts(paginationParams, debouncedSearch, normalizedBranchNo, categoryId),
     placeholderData: (previousData) => previousData,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

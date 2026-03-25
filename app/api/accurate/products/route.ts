@@ -7,7 +7,18 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const pageSize = parseInt(searchParams.get('pageSize') || '20');
-    const branchNo = searchParams.get('branchNo') || null;
+    const rawBranchNo = searchParams.get('branchNo');
+    const normalizedBranchNoRaw =
+      typeof rawBranchNo === 'string' ? rawBranchNo.trim() : '';
+    const branchNo =
+      !normalizedBranchNoRaw ||
+      normalizedBranchNoRaw.toLowerCase() === 'all' ||
+      (normalizedBranchNoRaw.toLowerCase().includes('all') &&
+        normalizedBranchNoRaw.toLowerCase().includes('branch')) ||
+      normalizedBranchNoRaw.toLowerCase().includes('semua cabang')
+        ? null
+        : normalizedBranchNoRaw;
+    const isAllBranches = branchNo === null;
 
     // Category filter — accepts a single category ID
     const categoryId = searchParams.get('categoryId') || null;
@@ -15,45 +26,56 @@ export async function GET(request: Request) {
     const rawSearch = searchParams.get('search') || '';
     const search = typeof rawSearch === 'string' ? rawSearch.trim() : '';
 
-    // ✅ If no branchNo provided — return no products
-    if (!branchNo) {
-      return NextResponse.json({
-        success: false,
-        error: 'Branch ID is required',
-        count: 0,
-        totalCount: 0,
-        products: [],
-      }, { status: 400 });
-    }
+    let branch: { name: string; defaultBranch: boolean } | null = null;
+    let selectedBranchId: number | null = null;
+    let branches: Array<{
+      id: number;
+      name: string;
+      defaultBranch: boolean;
+    }> = [];
 
-    const branchId = parseInt(branchNo);
+    if (!isAllBranches) {
+      const branchId = parseInt(branchNo);
+      selectedBranchId = branchId;
 
-    // ✅ If branchNo is not a valid number — return no products
-    if (isNaN(branchId)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid branch ID',
-        count: 0,
-        totalCount: 0,
-        products: [],
-      }, { status: 400 });
-    }
+      // If branchNo is not a valid number — return no products
+      if (isNaN(branchId)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid branch ID',
+            count: 0,
+            totalCount: 0,
+            products: [],
+          },
+          { status: 400 }
+        );
+      }
 
-    const branchesRes = await accurateFetch(
-      '/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100'
-    );
-    const branches: Array<{ id: number; name: string; defaultBranch: boolean }> = branchesRes.d || [];
-    const branch = branches.find((b) => Number(b.id) === branchId);
+      const branchesRes = await accurateFetch(
+        '/accurate/api/branch/list.do?fields=id,name,defaultBranch&sp.pageSize=100'
+      );
+      branches = (branchesRes.d || []) as Array<{
+        id: number;
+        name: string;
+        defaultBranch: boolean;
+      }>;
+      const foundBranch = branches.find((b) => Number(b.id) === branchId) || null;
 
-    // If branch not found in Accurate — return no products
-    if (!branch) {
-      return NextResponse.json({
-        success: false,
-        error: `Branch with ID ${branchId} does not exist`,
-        count: 0,
-        totalCount: 0,
-        products: [],
-      }, { status: 404 });
+      if (!foundBranch) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Branch with ID ${branchId} does not exist`,
+            count: 0,
+            totalCount: 0,
+            products: [],
+          },
+          { status: 404 }
+        );
+      }
+
+      branch = { name: foundBranch.name, defaultBranch: foundBranch.defaultBranch };
     }
 
     // Build product list URL
@@ -75,25 +97,49 @@ export async function GET(request: Request) {
     const listResponse = await accurateFetch(url);
     let products = listResponse.d || [];
 
-    // Filter by branch
-    const defaultBranchName =
-      branches.find((b) => b.defaultBranch === true)?.name ?? null;
+    // Filter by branch only when a specific branch is selected.
+    // When "All branches" is active, we return the full list (no filtering).
+    if (!isAllBranches && branch && selectedBranchId !== null) {
+      products = products.filter((product: any) => {
+        const productBranch = product.itemBranchName;
+        const productBranchName =
+          typeof productBranch === 'string' ? productBranch.trim() : productBranch;
 
-    products = products.filter((product: any) => {
-      const productBranch = product.itemBranchName;
+        // No branch assigned → show everywhere
+        if (!productBranchName) return true;
 
-      // No branch assigned → show everywhere
-      if (!productBranch) return true;
+        // Some Accurate tenants store "visible for all branches" as a literal label.
+        // Example from your output: "[Semua Cabang]".
+        if (typeof productBranchName === 'string') {
+          const pb = productBranchName.toLowerCase();
+          if (
+            pb === '[semua cabang]' ||
+            pb === 'semua cabang' ||
+            pb.includes('semua cabang') ||
+            pb === 'all branches' ||
+            pb === 'all branch' ||
+            (pb.includes('all') && pb.includes('branch'))
+          ) {
+            return true;
+          }
+        }
 
-      // Assigned to default branch → show everywhere
-      if (productBranch === defaultBranchName) return true;
+        // Map the product's branch name -> branch id (from /branch/list.do).
+        // Then compare branch id with selected branch id.
+        const matchedBranch = branches.find((b) => {
+          const name = b?.name;
+          if (
+            typeof name !== 'string' ||
+            typeof productBranchName !== 'string'
+          )
+            return false;
+          return name.trim().toLowerCase() === productBranchName.toLowerCase();
+        });
 
-      // Explicitly assigned to this branch → show
-      if (productBranch === branch.name) return true;
-
-      // Assigned to a different branch → hide
-      return false;
-    });
+        if (!matchedBranch) return false;
+        return Number(matchedBranch.id) === selectedBranchId;
+      });
+    }
 
     return NextResponse.json({
       success: true,
